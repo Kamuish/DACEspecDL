@@ -18,7 +18,6 @@ class Star:
     pipe_KW: Optional[Dict[str, str]] = None
     api_user: Optional[str] = None
 
-
     @cached_property
     def _data(self):
         """
@@ -87,6 +86,7 @@ class Star:
             if len(filelist) == 0:
                 logger.warning("All files already exist in the specific disk location")
                 continue
+            logger.info(f"Triggering the download of {len(filelist)} files")
 
             disk_path.mkdir(exist_ok=True, parents=True)
             Spectroscopy.download_files(files=filelist,
@@ -105,7 +105,8 @@ class Star:
                     tar.extractall(path=disk_path)
 
                 if common_root_folder:
-                    all_paths = disk_path.glob("**/*.fits")
+                    all_paths = list(*(list(i.glob("*.fits")) for i in disk_path.iterdir() if i.is_dir()))
+
                     store_path = disk_path.as_posix()
 
                     for path in all_paths:
