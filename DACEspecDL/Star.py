@@ -78,6 +78,7 @@ class Star:
         count = 0
         file_list_to_download = {}
 
+        tar_name = "result.tar.gz"
         for item in self.data_to_iterate_over(metric_name="raw_file",
                                               instrument=instrument, OBS_mode=OBS_mode,
                                               pipe_identifier=pipe_identifier
@@ -111,21 +112,20 @@ class Star:
             Spectroscopy.download_files(files=filelist,
                                         output_directory=disk_path,
                                         file_type=file_type,
-                                        output_filename="result.tar.gz"
+                                        output_filename=tar_name
                                         )
 
             if unzip:
                 import tarfile
-                loc = list(disk_path.glob("*tar*"))
-                if len(loc) != 1:
-                    raise Exception("Something went wrong during unpacking")
-                loc = loc[0]
-
-                with tarfile.open(loc) as tar:
+                with tarfile.open(disk_path / tar_name) as tar:
                     tar.extractall(path=disk_path)
 
                 if common_root_folder:
-                    all_paths = list(*(list(i.glob("*.fits")) for i in disk_path.iterdir() if i.is_dir()))
+                    all_paths = []
+                    for i in disk_path.iterdir():
+                        if i.is_dir():
+                            continue
+                        all_paths.extend(list(i.glob("*.fits")))
 
                     store_path = disk_path.as_posix()
 
