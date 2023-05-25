@@ -79,6 +79,10 @@ class Star:
         file_list_to_download = {}
 
         tar_name = "result.tar.gz"
+        if instrument.upper() == "HARPSN":
+            logger.warning("The name of HARPSN on DACE is HARPN; Updating the name")
+            instrument = "HARPN"
+
         for item in self.data_to_iterate_over(metric_name="raw_file",
                                               instrument=instrument, OBS_mode=OBS_mode,
                                               pipe_identifier=pipe_identifier
