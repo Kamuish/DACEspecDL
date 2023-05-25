@@ -58,9 +58,23 @@ class Star:
                       OBS_mode: Optional[str] = None,
                       pipe_identifier: Optional[str] = None,
                       file_type: str = "all",
-                      common_root_folder: bool = True,
-                      unzip: bool = True
+                      common_root_folder: bool = True, # for the unpack
+                      unzip: bool = True, #
+                      allow_subfolders: bool = True
                       ) -> None:
+        """
+
+        :param output_path: Path in which the spectra will be stored
+        :param force_download: Download, even if the files exist on disk
+        :param instrument: sequence of characters that exist in the instrument name
+        :param OBS_mode: sequence of characters that exist in the OBS mode
+        :param pipe_identifier: sequence of characters that exist in the pipeline name
+        :param file_type:
+        :param common_root_folder: After unzipping the data, keep everything on the created subfolder
+        :param unzip: Trigger unzip of the downloaded .tar file
+        :param allow_subfolders: Allow creation of subfolders to divide by instrument and pipeline name
+        :return:
+        """
         count = 0
         file_list_to_download = {}
 
@@ -71,7 +85,12 @@ class Star:
             count += 1
             for file in item:
                 store_inst_name, store_pipe_name, *_ = file.split("/")
-                modifier = output_path / store_inst_name / store_pipe_name
+
+                if allow_subfolders:
+                    modifier = output_path / store_inst_name / store_pipe_name
+                else:
+                    modifier = output_path
+
                 if modifier not in file_list_to_download:
                     file_list_to_download[modifier] = []
 
