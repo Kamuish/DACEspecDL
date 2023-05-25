@@ -123,7 +123,7 @@ class Star:
                 if common_root_folder:
                     all_paths = []
                     for i in disk_path.iterdir():
-                        if i.is_dir():
+                        if not i.is_dir():
                             continue
                         all_paths.extend(list(i.glob("*.fits")))
 
