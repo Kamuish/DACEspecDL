@@ -91,7 +91,8 @@ class Star:
             disk_path.mkdir(exist_ok=True, parents=True)
             Spectroscopy.download_files(files=filelist,
                                         output_directory=disk_path,
-                                        file_type=file_type
+                                        file_type=file_type,
+                                        output_filename="result.tar.gz"
                                         )
 
             if unzip:
