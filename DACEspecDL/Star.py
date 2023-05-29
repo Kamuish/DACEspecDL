@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from astroquery.simbad import Simbad
+
 import shutil
 from dataclasses import dataclass
 from functools import cached_property, lru_cache
@@ -229,3 +231,18 @@ class Star:
             return "3.0.0"
         elif "HARPN" in instrument:
             return "2.3.5"
+
+    @property
+    def spectral_type(self) -> str:
+        """
+        Get the spectral type from SIMBAD
+        :return:
+        """
+
+        aSimbad = Simbad()
+        aSimbad.add_votable_fields("sptype")
+        r = aSimbad.query_object(self.name)
+        if r is None:
+            raise Exception(f"Couldn't find the object {self.name} in SIMBAD")
+        ST = r["SP_TYPE"][0][:2].replace("d", "")
+        return ST
