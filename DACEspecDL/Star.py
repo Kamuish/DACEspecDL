@@ -53,6 +53,41 @@ class Star:
             raise Exception(f"Either the instrument or the pipeline don't exist - {instrument}::{pipeline}")
         return list(self._data[instrument][pipeline].keys())
 
+    def get_header_info(self,
+                        kw_to_get: List[str],
+                        instrument: Optional[str] = None,
+                        OBS_mode: Optional[str] = None,
+                        pipe_identifier: Optional[str] = None,
+                        ) -> Dict[str, Any]:
+
+        data_dict = {}
+        for (instrument_name, pipe_name, OBS_name, data) in self.data_to_iterate_over(metric_name="rv",
+                                                                                      pipe_identifier=pipe_identifier,
+                                                                                      OBS_mode=OBS_mode,
+                                                                                      instrument=instrument,
+                                                                                      get_full_dict=True
+                                                                                      ):
+            if instrument_name not in data_dict:
+                data_dict[instrument_name] = {}
+
+            if OBS_name not in data_dict[instrument_name]:
+                data_dict[instrument_name] = {OBS_name: {}}
+
+            if pipe_name not in data_dict[instrument_name][OBS_name]:
+                data_dict[instrument_name][OBS_name][pipe_name] = {i: data[i] for i in kw_to_get}
+
+        return data_dict
+
+    def get_RVs(self, instrument: Optional[str] = None,
+                OBS_mode: Optional[str] = None,
+                pipe_identifier: Optional[str] = None
+                ) -> Dict[str, float]:
+        return self.get_header_info(kw_to_get=["rjd", "rv", "rv_err"],
+                                    instrument=instrument,
+                                    OBS_mode=OBS_mode,
+                                    pipe_identifier=pipe_identifier
+                                    )
+
     def download_data(self,
                       output_path: Path,
                       force_download: bool = False,
@@ -60,8 +95,8 @@ class Star:
                       OBS_mode: Optional[str] = None,
                       pipe_identifier: Optional[str] = None,
                       file_type: str = "all",
-                      common_root_folder: bool = True, # for the unpack
-                      unzip: bool = True, #
+                      common_root_folder: bool = True,  # for the unpack
+                      unzip: bool = True,  #
                       allow_subfolders: bool = True
                       ) -> None:
         """
@@ -85,10 +120,10 @@ class Star:
             logger.warning("The name of HARPSN on DACE is HARPN; Updating the name")
             instrument = "HARPN"
 
-        for item in self.data_to_iterate_over(metric_name="raw_file",
-                                              instrument=instrument, OBS_mode=OBS_mode,
-                                              pipe_identifier=pipe_identifier
-                                              ):
+        for (*_, item) in self.data_to_iterate_over(metric_name="raw_file",
+                                                    instrument=instrument, OBS_mode=OBS_mode,
+                                                    pipe_identifier=pipe_identifier
+                                                    ):
             count += 1
             for file in item:
                 store_inst_name, store_pipe_name, *_ = file.split("/")
@@ -150,7 +185,8 @@ class Star:
                              metric_name: str,
                              instrument: Optional[str] = None,
                              OBS_mode: Optional[str] = None,
-                             pipe_identifier: Optional[str] = None
+                             pipe_identifier: Optional[str] = None,
+                             get_full_dict=False
                              ):
         """
 
@@ -172,7 +208,10 @@ class Star:
                 for OBS_name, data_3 in data_2.items():
                     if reject_iter(OBS_mode, OBS_name):
                         continue
-                    yield data_3[metric_name]
+                    if get_full_dict:
+                        yield instrument_name, pipe_name, OBS_name, data_3
+                    else:
+                        yield instrument_name, pipe_name, OBS_name, data_3[metric_name]
 
     def get_metrics_of_instrument(self, instrument: str, metric: str | Iterable[str]) -> Dict[str, List[Any]]:
         """
@@ -242,7 +281,13 @@ class Star:
         aSimbad = Simbad()
         aSimbad.add_votable_fields("sptype")
         r = aSimbad.query_object(self.name)
+
+        print(r.keys())
         if r is None:
             raise Exception(f"Couldn't find the object {self.name} in SIMBAD")
         ST = r["SP_TYPE"][0][:2].replace("d", "")
         return ST
+
+    @property
+    def aliases(self):
+        return Simbad.query_objectids(self.name)
